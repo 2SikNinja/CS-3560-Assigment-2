@@ -2,9 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
-public class UserView implements Observer {
-    private JFrame frame;
+public class UserView extends JFrame implements Observer {
     private User user;
     private DefaultListModel<String> followingModel;
     private DefaultListModel<String> newsFeedModel;
@@ -13,24 +13,25 @@ public class UserView implements Observer {
 
     public UserView(User user) {
         this.user = user;
+        user.addObserver(this); // Register this view as an observer of the user
         createGui();
     }
 
     private void createGui() {
-        frame = new JFrame(user.getId());
-        frame.setSize(400, 500);
-        frame.setLayout(new GridLayout(3, 1));
+        setTitle(user.getId());
+        setSize(400, 500);
+        setLayout(new GridLayout(3, 1));
 
         // Setup following list
         followingModel = new DefaultListModel<>();
         JList<String> followingList = new JList<>(followingModel);
-        frame.add(new JScrollPane(followingList));
+        add(new JScrollPane(followingList));
         updateFollowingList();
 
         // Setup news feed list
         newsFeedModel = new DefaultListModel<>();
         JList<String> newsFeedList = new JList<>(newsFeedModel);
-        frame.add(new JScrollPane(newsFeedList));
+        add(new JScrollPane(newsFeedList));
         updateNewsFeed();
 
         // Setup lower part for following users and posting tweets
@@ -65,6 +66,7 @@ public class UserView implements Observer {
                 if (followUser != null) {
                     user.addFollowing(followUser);
                     updateFollowingList();
+                    updateNewsFeed();
                 }
             }
         });
@@ -101,11 +103,11 @@ public class UserView implements Observer {
         });
         lowerPanel.add(tweetButton);
 
-        frame.add(lowerPanel);
+        add(lowerPanel);
 
         // Configure the frame
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setVisible(true);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
     }
 
     private void updateFollowingList() {
@@ -120,6 +122,14 @@ public class UserView implements Observer {
         for (Tweet tweet : user.getTweets()) {
             newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
         }
+
+        Group followingGroup = user.getFollowingGroup();
+        if (followingGroup != null) {
+            List<Tweet> collectedTweets = followingGroup.collectTweets();
+            for (Tweet tweet : collectedTweets) {
+                newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
+            }
+        }
     }
 
     private User findUser(String userId) {
@@ -129,10 +139,11 @@ public class UserView implements Observer {
 
     @Override
     public void update(Tweet tweet) {
-        newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
-    }
-
-    public void setVisible(boolean isVisible) {
-        frame.setVisible(isVisible);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
+            }
+        });
     }
 }

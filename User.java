@@ -1,5 +1,8 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import javax.swing.tree.DefaultMutableTreeNode;
 
 public class User implements TwitterEntity {
     private static int totalUsers = 0;
@@ -9,13 +12,16 @@ public class User implements TwitterEntity {
     private List<User> followings;
     private List<Tweet> tweets;
     private List<Observer> observers;
+    private Group followingGroup;
+    private HashMap<String, TwitterEntity> entities;
 
-    public User(String id) {
+    public User(String id, HashMap<String, TwitterEntity> entities) {
         this.id = id;
         this.followers = new ArrayList<>();
         this.followings = new ArrayList<>();
         this.tweets = new ArrayList<>();
         this.observers = new ArrayList<>();
+        this.entities = entities;
         totalUsers++;
     }
 
@@ -45,6 +51,32 @@ public class User implements TwitterEntity {
 
     public void addFollowing(User user) {
         this.followings.add(user);
+
+        // Create the group for following if it doesn't exist
+        String groupName = Group.generateGroupName(this);
+        Group followingGroup = (Group) entities.get(groupName);
+        if (followingGroup == null) {
+            followingGroup = new Group(groupName);
+            entities.put(groupName, followingGroup);
+        }
+        followingGroup.addEntity(this);
+        followingGroup.addEntity(user);
+
+        this.followingGroup = followingGroup;
+
+        // Add the following group to the admin control panel
+        AdminControlPanel adminControlPanel = AdminControlPanel.getInstance();
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) adminControlPanel.getTreeModel().getRoot();
+        DefaultMutableTreeNode followingGroupNode = adminControlPanel.findNode(rootNode, followingGroup);
+
+        if (followingGroupNode == null) {
+            followingGroupNode = new DefaultMutableTreeNode(followingGroup);
+            adminControlPanel.getTreeModel().insertNodeInto(followingGroupNode, rootNode, rootNode.getChildCount());
+        }
+    }
+
+    public Group getFollowingGroup() {
+        return followingGroup;
     }
 
     public void addTweet(Tweet tweet) {

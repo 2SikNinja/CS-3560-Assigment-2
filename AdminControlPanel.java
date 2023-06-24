@@ -1,12 +1,12 @@
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 import java.util.HashMap;
 
 public class AdminControlPanel {
@@ -66,7 +66,7 @@ public class AdminControlPanel {
                     if (userId.isEmpty() || userId.equals("Enter User ID here")) {
                         JOptionPane.showMessageDialog(frame, "Please enter a user ID first.");
                     } else {
-                        User newUser = new User(userId);
+                        User newUser = new User(userId, entities);
                         DefaultMutableTreeNode node = new DefaultMutableTreeNode(newUser);
                         selectedNode.add(node);
                         treeModel.reload();
@@ -110,11 +110,24 @@ public class AdminControlPanel {
                     if (groupId.isEmpty() || groupId.equals("Enter Group ID here")) {
                         JOptionPane.showMessageDialog(frame, "Please enter a group ID first.");
                     } else {
-                        Group newGroup = new Group(groupId);
-                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
-                        selectedNode.add(node);
-                        treeModel.reload();
-                        entities.put(groupId, newGroup);
+                        TwitterEntity selectedEntity = (TwitterEntity) selectedNode.getUserObject();
+                        if (selectedEntity instanceof User) {
+                            User user = (User) selectedEntity;
+                            String groupName = user.getId() + "'s Following";
+                            Group newGroup = new Group(groupName);
+                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
+                            selectedNode.add(node);
+                            treeModel.reload();
+                            entities.put(groupName, newGroup);
+                        } else if (selectedEntity instanceof Group) {
+                            Group group = (Group) selectedEntity;
+                            String groupName = group.getId() + "'s Following";
+                            Group newGroup = new Group(groupName);
+                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
+                            selectedNode.add(node);
+                            treeModel.reload();
+                            entities.put(groupName, newGroup);
+                        }
                     }
                 } else {
                     JOptionPane.showMessageDialog(frame, "Please select a folder first.");
@@ -228,5 +241,26 @@ public class AdminControlPanel {
             return (User) entity;
         }
         return null;
+    }
+
+    public DefaultTreeModel getTreeModel() {
+        return treeModel;
+    }
+
+    public DefaultMutableTreeNode findNode(DefaultMutableTreeNode root, Group group) {
+        if (root.getUserObject().equals(group)) {
+            return root;
+        } else {
+            DefaultMutableTreeNode node = null;
+            int childCount = root.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) root.getChildAt(i);
+                node = findNode(childNode, group);
+                if (node != null) {
+                    break;
+                }
+            }
+            return node;
+        }
     }
 }
