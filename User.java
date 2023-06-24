@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public class User implements TwitterEntity {
@@ -49,31 +48,26 @@ public class User implements TwitterEntity {
         this.followers.add(user);
     }
 
-    public void addFollowing(User user) {
-        this.followings.add(user);
+   public void addFollowing(User user) {
+    this.followings.add(user);
+    user.addFollower(this); // Add this user as a follower of the followed user
 
-        // Create the group for following if it doesn't exist
-        String groupName = Group.generateGroupName(this);
-        Group followingGroup = (Group) entities.get(groupName);
+    // Update the following group of the user
+    if (followingGroup == null) {
+        followingGroup = user.getFollowingGroup(); // Get the following group of the followed user
+    }
+    if (followingGroup == null) {
+        String groupName = "Following";
+        followingGroup = (Group) entities.get(groupName);
         if (followingGroup == null) {
             followingGroup = new Group(groupName);
             entities.put(groupName, followingGroup);
         }
-        followingGroup.addEntity(this);
-        followingGroup.addEntity(user);
-
-        this.followingGroup = followingGroup;
-
-        // Add the following group to the admin control panel
-        AdminControlPanel adminControlPanel = AdminControlPanel.getInstance();
-        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) adminControlPanel.getTreeModel().getRoot();
-        DefaultMutableTreeNode followingGroupNode = adminControlPanel.findNode(rootNode, followingGroup);
-
-        if (followingGroupNode == null) {
-            followingGroupNode = new DefaultMutableTreeNode(followingGroup);
-            adminControlPanel.getTreeModel().insertNodeInto(followingGroupNode, rootNode, rootNode.getChildCount());
-        }
     }
+    followingGroup.addEntity(user);
+}
+
+
 
     public Group getFollowingGroup() {
         return followingGroup;

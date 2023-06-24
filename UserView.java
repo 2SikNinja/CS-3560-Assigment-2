@@ -122,14 +122,6 @@ public class UserView extends JFrame implements Observer {
         for (Tweet tweet : user.getTweets()) {
             newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
         }
-
-        Group followingGroup = user.getFollowingGroup();
-        if (followingGroup != null) {
-            List<Tweet> collectedTweets = followingGroup.collectTweets();
-            for (Tweet tweet : collectedTweets) {
-                newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
-            }
-        }
     }
 
     private User findUser(String userId) {

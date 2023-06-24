@@ -36,8 +36,8 @@ public class Group implements TwitterEntity {
         return collectedTweets;
     }
 
-    public static String generateGroupName(User user) {
-        return user.getId() + "'s Following";
+    public static String generateGroupName(User user, User followUser) {
+        return user.getId() + "'s Following with " + followUser.getId();
     }
 
     @Override
