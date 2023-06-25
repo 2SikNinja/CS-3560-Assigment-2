@@ -2,8 +2,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+
 
 public class UserView extends JFrame implements Observer {
     private User user;
@@ -99,7 +105,8 @@ public class UserView extends JFrame implements Observer {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String tweetMsg = tweetField.getText();
-                Tweet tweet = new Tweet(tweetMsg, user);
+                LocalDateTime timestamp = LocalDateTime.now();
+                Tweet tweet = new Tweet(tweetMsg, user, timestamp);
 
                 // Disable news feed updates temporarily
                 isUpdatingNewsFeed = false;
@@ -129,10 +136,27 @@ public class UserView extends JFrame implements Observer {
 
     private void updateNewsFeed() {
         newsFeedModel.clear();
-        Set<Tweet> uniqueTweets = new HashSet<>(user.getNewsFeed());
-        for (Tweet tweet : uniqueTweets) {
-            newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
+        List<Tweet> sortedTweets = getSortedTweets();
+        for (Tweet tweet : sortedTweets) {
+            String formattedTimestamp = tweet.getTimestamp().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+            String message = "[" + formattedTimestamp + "] " + tweet.getAuthor().getId() + ": " + tweet.getMessage();
+            newsFeedModel.addElement(message);
         }
+    }
+
+    private List<Tweet> getSortedTweets() {
+        List<Tweet> allTweets = new ArrayList<>();
+        Set<User> followingUsers = new HashSet<>(user.getFollowingUsers());
+
+        // Collect all tweets from following users
+        for (User followingUser : followingUsers) {
+            allTweets.addAll(followingUser.getTweets());
+        }
+
+        // Sort the tweets based on timestamp
+        allTweets.sort(Comparator.comparing(Tweet::getTimestamp));
+
+        return allTweets;
     }
 
     private User findUser(String userId) {
@@ -149,11 +173,7 @@ public class UserView extends JFrame implements Observer {
                     // Only display the latest tweet
                     Tweet latestTweet = user.getLatestTweet();
                     if (latestTweet != null && latestTweet.equals(tweet)) {
-                        newsFeedModel.clear();
-                        Set<Tweet> uniqueTweets = new HashSet<>(user.getNewsFeed());
-                        for (Tweet t : uniqueTweets) {
-                            newsFeedModel.addElement(t.getAuthor().getId() + ": " + t.getMessage());
-                        }
+                        updateNewsFeed();
                     }
                 }
             }

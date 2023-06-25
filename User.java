@@ -1,5 +1,8 @@
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.*;
 
 public class User implements TwitterEntity {
     private static int totalUsers = 0;
@@ -65,13 +68,22 @@ public class User implements TwitterEntity {
                 }
             }
 
+            // Sort the news feed in chronological order
+            newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
+
             // Update the latest posted tweet
-            latestTweet = tweet;
+            setLatestTweet(tweet);
         }
     }
 
     public List<Tweet> getNewsFeed() {
         return newsFeed;
+    }
+
+    private void setLatestTweet(Tweet tweet) {
+        if (latestTweet == null || tweet.getTimestamp().isAfter(latestTweet.getTimestamp())) {
+            latestTweet = tweet;
+        }
     }
 
     public Tweet getLatestTweet() {

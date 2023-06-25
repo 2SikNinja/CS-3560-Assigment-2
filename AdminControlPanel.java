@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 public class AdminControlPanel {
@@ -267,26 +269,26 @@ public class AdminControlPanel {
         }
     }
 
-   // Custom tree cell renderer to display different icons for User and Group nodes
-private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-                                                  boolean leaf, int row, boolean hasFocus) {
-        Component component = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            Object userObject = node.getUserObject();
-            if (userObject instanceof User) {
-                setIcon(userIcon);
-            } else if (userObject instanceof Group) {
-                if (node.isRoot()) {
-                    setIcon(folderIcon);
-                } else {
-                    setIcon(groupIcon);
+    // Custom tree cell renderer to display different icons for User and Group nodes
+    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
+                                                      boolean leaf, int row, boolean hasFocus) {
+            Component component = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+            if (value instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+                Object userObject = node.getUserObject();
+                if (userObject instanceof User) {
+                    setIcon(userIcon);
+                } else if (userObject instanceof Group) {
+                    if (node.isRoot()) {
+                        setIcon(folderIcon);
+                    } else {
+                        setIcon(groupIcon);
+                    }
                 }
             }
+            return component;
         }
-        return component;
     }
-}
 }
