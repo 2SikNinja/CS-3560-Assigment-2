@@ -2,7 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class UserView extends JFrame implements Observer {
     private User user;
@@ -10,11 +11,13 @@ public class UserView extends JFrame implements Observer {
     private DefaultListModel<String> newsFeedModel;
     private JTextField followingField;
     private JTextField tweetField;
+    private boolean isUpdatingNewsFeed; // Flag to control news feed updates
 
     public UserView(User user) {
         this.user = user;
         user.addObserver(this); // Register this view as an observer of the user
         createGui();
+        isUpdatingNewsFeed = true; // Set the flag to true initially
     }
 
     private void createGui() {
@@ -97,8 +100,15 @@ public class UserView extends JFrame implements Observer {
             public void actionPerformed(ActionEvent e) {
                 String tweetMsg = tweetField.getText();
                 Tweet tweet = new Tweet(tweetMsg, user);
+
+                // Disable news feed updates temporarily
+                isUpdatingNewsFeed = false;
+
                 user.addTweet(tweet);
-                updateNewsFeed();
+                tweetField.setText(""); // Clear the tweet text field
+
+                // Re-enable news feed updates
+                isUpdatingNewsFeed = true;
             }
         });
         lowerPanel.add(tweetButton);
@@ -112,14 +122,15 @@ public class UserView extends JFrame implements Observer {
 
     private void updateFollowingList() {
         followingModel.clear();
-        for (User following : user.getFollowings()) {
+        for (User following : user.getFollowingUsers()) {
             followingModel.addElement(following.getId());
         }
     }
 
     private void updateNewsFeed() {
         newsFeedModel.clear();
-        for (Tweet tweet : user.getTweets()) {
+        Set<Tweet> uniqueTweets = new HashSet<>(user.getNewsFeed());
+        for (Tweet tweet : uniqueTweets) {
             newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
         }
     }
@@ -134,8 +145,23 @@ public class UserView extends JFrame implements Observer {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                newsFeedModel.addElement(tweet.getAuthor().getId() + ": " + tweet.getMessage());
+                if (isUpdatingNewsFeed) {
+                    // Only display the latest tweet
+                    Tweet latestTweet = user.getLatestTweet();
+                    if (latestTweet != null && latestTweet.equals(tweet)) {
+                        newsFeedModel.clear();
+                        Set<Tweet> uniqueTweets = new HashSet<>(user.getNewsFeed());
+                        for (Tweet t : uniqueTweets) {
+                            newsFeedModel.addElement(t.getAuthor().getId() + ": " + t.getMessage());
+                        }
+                    }
+                }
             }
         });
+    }
+
+    public void updateUserView() {
+        updateFollowingList();
+        updateNewsFeed();
     }
 }

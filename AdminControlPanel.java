@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -16,6 +17,9 @@ public class AdminControlPanel {
     private DefaultTreeModel treeModel;
     private JTree tree;
     private HashMap<String, TwitterEntity> entities;
+    private ImageIcon groupIcon;
+    private ImageIcon userIcon;
+    private ImageIcon folderIcon;
 
     private AdminControlPanel() {
         frame = new JFrame("Admin Control Panel");
@@ -66,7 +70,7 @@ public class AdminControlPanel {
                     if (userId.isEmpty() || userId.equals("Enter User ID here")) {
                         JOptionPane.showMessageDialog(frame, "Please enter a user ID first.");
                     } else {
-                        User newUser = new User(userId, entities);
+                        User newUser = new User(userId);
                         DefaultMutableTreeNode node = new DefaultMutableTreeNode(newUser);
                         selectedNode.add(node);
                         treeModel.reload();
@@ -111,23 +115,11 @@ public class AdminControlPanel {
                         JOptionPane.showMessageDialog(frame, "Please enter a group ID first.");
                     } else {
                         TwitterEntity selectedEntity = (TwitterEntity) selectedNode.getUserObject();
-                        if (selectedEntity instanceof User) {
-                            User user = (User) selectedEntity;
-                            String groupName = user.getId() + "'s Following";
-                            Group newGroup = new Group(groupName);
-                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
-                            selectedNode.add(node);
-                            treeModel.reload();
-                            entities.put(groupName, newGroup);
-                        } else if (selectedEntity instanceof Group) {
-                            Group group = (Group) selectedEntity;
-                            String groupName = group.getId() + "'s Following";
-                            Group newGroup = new Group(groupName);
-                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
-                            selectedNode.add(node);
-                            treeModel.reload();
-                            entities.put(groupName, newGroup);
-                        }
+                        Group newGroup = new Group(groupId);
+                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(newGroup);
+                        selectedNode.add(node);
+                        treeModel.reload();
+                        entities.put(groupId, newGroup);
                     }
                 } else {
                     JOptionPane.showMessageDialog(frame, "Please select a folder first.");
@@ -188,7 +180,7 @@ public class AdminControlPanel {
         });
         rightSidePanel.add(showGroupTotalBtn);
 
-        JButton showMessageTotalBtn = new JButton("Show Messages Total");
+        JButton showMessageTotalBtn = new JButton("Show Message Total");
         showMessageTotalBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -204,7 +196,7 @@ public class AdminControlPanel {
         });
         rightSidePanel.add(showMessageTotalBtn);
 
-        JButton showPositivePercentageBtn = new JButton("Show Positive Percentages");
+        JButton showPositivePercentageBtn = new JButton("Show Positive Percentage");
         showPositivePercentageBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -219,6 +211,16 @@ public class AdminControlPanel {
         rightSidePanel.add(showPositivePercentageBtn);
 
         frame.add(rightSidePanel);
+
+        // Set custom icons for Group and User nodes
+        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+        groupIcon = new ImageIcon("group.png");
+        userIcon = new ImageIcon("user.png");
+        folderIcon = new ImageIcon("folder.png");
+        renderer.setClosedIcon(folderIcon);
+        renderer.setOpenIcon(folderIcon);
+        renderer.setLeafIcon(folderIcon);
+        tree.setCellRenderer(renderer);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);

@@ -1,5 +1,5 @@
 public class Driver {
-     public static void main(String[] args) {
-          AdminControlPanel.getInstance();
-     }
+    public static void main(String[] args) {
+        AdminControlPanel.getInstance();
+    }
 }

@@ -1,7 +1,5 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import javax.swing.tree.DefaultMutableTreeNode;
 
 public class User implements TwitterEntity {
     private static int totalUsers = 0;
@@ -11,16 +9,17 @@ public class User implements TwitterEntity {
     private List<User> followings;
     private List<Tweet> tweets;
     private List<Observer> observers;
-    private Group followingGroup;
-    private HashMap<String, TwitterEntity> entities;
+    private List<Tweet> newsFeed;
+    private Tweet latestTweet; // Keep track of the latest posted tweet
+    private UserView userView; // Reference to the associated UserView instance
 
-    public User(String id, HashMap<String, TwitterEntity> entities) {
+    public User(String id) {
         this.id = id;
         this.followers = new ArrayList<>();
         this.followings = new ArrayList<>();
         this.tweets = new ArrayList<>();
         this.observers = new ArrayList<>();
-        this.entities = entities;
+        this.newsFeed = new ArrayList<>();
         totalUsers++;
     }
 
@@ -36,7 +35,7 @@ public class User implements TwitterEntity {
         return followers;
     }
 
-    public List<User> getFollowings() {
+    public List<User> getFollowingUsers() {
         return followings;
     }
 
@@ -48,34 +47,47 @@ public class User implements TwitterEntity {
         this.followers.add(user);
     }
 
-   public void addFollowing(User user) {
-    this.followings.add(user);
-    user.addFollower(this); // Add this user as a follower of the followed user
-
-    // Update the following group of the user
-    if (followingGroup == null) {
-        followingGroup = user.getFollowingGroup(); // Get the following group of the followed user
-    }
-    if (followingGroup == null) {
-        String groupName = "Following";
-        followingGroup = (Group) entities.get(groupName);
-        if (followingGroup == null) {
-            followingGroup = new Group(groupName);
-            entities.put(groupName, followingGroup);
-        }
-    }
-    followingGroup.addEntity(user);
-}
-
-
-
-    public Group getFollowingGroup() {
-        return followingGroup;
+    public void addFollowing(User user) {
+        this.followings.add(user);
+        user.addFollower(this); // Add this user as a follower of the followed user
     }
 
     public void addTweet(Tweet tweet) {
-        this.tweets.add(tweet);
-        notifyObservers(tweet);
+        if (!tweets.contains(tweet)) {
+            this.tweets.add(tweet);
+            notifyObservers(tweet);
+
+            // Save the tweet to the user's news feed and the news feeds of their followers
+            if (!newsFeed.contains(tweet)) {
+                this.newsFeed.add(tweet);
+                for (User follower : followers) {
+                    follower.newsFeed.add(tweet);
+                }
+            }
+
+            // Update the latest posted tweet
+            latestTweet = tweet;
+        }
+    }
+
+    public List<Tweet> getNewsFeed() {
+        return newsFeed;
+    }
+
+    public Tweet getLatestTweet() {
+        return latestTweet;
+    }
+
+    public void setUserView(UserView userView) {
+        this.userView = userView;
+    }
+
+    public void removeUserView() {
+        this.userView = null;
+    }
+
+    public UserView getUserView() {
+        return userView;
     }
 
     @Override

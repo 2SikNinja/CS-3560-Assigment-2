@@ -1,3 +1,3 @@
 public interface Observer {
-     void update(Tweet tweet);
+    void update(Tweet tweet);
 }
