@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -213,7 +214,7 @@ public class AdminControlPanel {
         frame.add(rightSidePanel);
 
         // Set custom icons for Group and User nodes
-        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+        CustomTreeCellRenderer renderer = new CustomTreeCellRenderer();
         groupIcon = new ImageIcon("group.png");
         userIcon = new ImageIcon("user.png");
         folderIcon = new ImageIcon("folder.png");
@@ -265,4 +266,27 @@ public class AdminControlPanel {
             return node;
         }
     }
+
+   // Custom tree cell renderer to display different icons for User and Group nodes
+private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
+                                                  boolean leaf, int row, boolean hasFocus) {
+        Component component = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (value instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+            Object userObject = node.getUserObject();
+            if (userObject instanceof User) {
+                setIcon(userIcon);
+            } else if (userObject instanceof Group) {
+                if (node.isRoot()) {
+                    setIcon(folderIcon);
+                } else {
+                    setIcon(groupIcon);
+                }
+            }
+        }
+        return component;
+    }
+}
 }
