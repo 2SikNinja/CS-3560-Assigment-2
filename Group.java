@@ -1,13 +1,15 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Group implements TwitterEntity {
+public class Group implements TwitterEntity, Observer {
     private String id;
     private List<TwitterEntity> entities;
+    private List<Tweet> tweets; // Store the received tweets
 
     public Group(String id) {
         this.id = id;
         this.entities = new ArrayList<>();
+        this.tweets = new ArrayList<>();
     }
 
     public String getId() {
@@ -42,17 +44,23 @@ public class Group implements TwitterEntity {
 
     @Override
     public void addObserver(Observer observer) {
-        // Do nothing
+        for (TwitterEntity entity : entities) {
+            entity.addObserver(observer);
+        }
     }
 
     @Override
     public void removeObserver(Observer observer) {
-        // Do nothing
+        for (TwitterEntity entity : entities) {
+            entity.removeObserver(observer);
+        }
     }
 
     @Override
     public void notifyObservers(Tweet tweet) {
-        // Do nothing
+        for (TwitterEntity entity : entities) {
+            entity.notifyObservers(tweet);
+        }
     }
 
     @Override
@@ -63,5 +71,18 @@ public class Group implements TwitterEntity {
     @Override
     public String toString() {
         return id;
+    }
+
+    @Override
+    public void update(Tweet tweet) {
+        // Store the received tweet
+        tweets.add(tweet);
+
+        // Notify the observers (users and other groups)
+        notifyObservers(tweet);
+    }
+
+    public void removeEntity(TwitterEntity entity) {
+        entities.remove(entity);
     }
 }

@@ -4,8 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public class User implements TwitterEntity {
     private static int totalUsers = 0;
@@ -18,6 +21,7 @@ public class User implements TwitterEntity {
     private List<Tweet> newsFeed;
     private Tweet latestTweet; // Keep track of the latest posted tweet
     private UserView userView; // Reference to the associated UserView instance
+    private List<Group> groups; // List of groups the user belongs to
 
     public User(String id) {
         this.id = id;
@@ -26,6 +30,9 @@ public class User implements TwitterEntity {
         this.tweets = new ArrayList<>();
         this.observers = new ArrayList<>();
         this.newsFeed = new ArrayList<>();
+        this.latestTweet = null;
+        this.userView = null;
+        this.groups = new ArrayList<>();
         totalUsers++;
     }
 
@@ -59,28 +66,32 @@ public class User implements TwitterEntity {
     }
 
     public void addTweet(Tweet tweet) {
-    if (!tweets.contains(tweet)) {
-        this.tweets.add(tweet);
-        notifyObservers(tweet);
+        if (!tweets.contains(tweet)) {
+            this.tweets.add(tweet);
+            notifyObservers(tweet);
 
-        // Save the tweet to the user's news feed
-        if (!newsFeed.contains(tweet)) {
-            this.newsFeed.add(tweet);
+            // Save the tweet to the user's news feed
+            if (!newsFeed.contains(tweet)) {
+                this.newsFeed.add(tweet);
+            }
+
+            // Update the news feeds of all followers
+            for (User follower : followers) {
+                follower.newsFeed.add(tweet);
+            }
+
+            // Update the news feeds of all group members
+            for (Group group : groups) {
+                group.notifyObservers(tweet);
+            }
+
+            // Sort the news feed in chronological order
+            newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
+
+            // Update the latest posted tweet
+            setLatestTweet(tweet);
         }
-
-        // Update the news feeds of all followers
-        for (User follower : followers) {
-            follower.newsFeed.add(tweet);
-        }
-
-        // Sort the news feed in chronological order
-        newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
-
-        // Update the latest posted tweet
-        setLatestTweet(tweet);
     }
-}
-
 
     public List<Tweet> getNewsFeed() {
         return newsFeed;
@@ -108,6 +119,20 @@ public class User implements TwitterEntity {
         return userView;
     }
 
+    public void joinGroup(Group group) {
+        this.groups.add(group);
+        group.addEntity(this);
+    }
+
+    public void leaveGroup(Group group) {
+        this.groups.remove(group);
+        group.removeEntity(this);
+    }
+
+    public List<Group> getGroups() {
+        return groups;
+    }
+
     @Override
     public void addObserver(Observer observer) {
         this.observers.add(observer);
@@ -132,10 +157,10 @@ public class User implements TwitterEntity {
 
     @Override
     public String toString() {
-        return getName(); // Return the user's name
+        return getName();
     }
 
     public String getName() {
-        return id; // Return the user's name (in this case, the ID)
+        return id;
     }
 }
