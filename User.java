@@ -1,6 +1,9 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 
@@ -56,25 +59,28 @@ public class User implements TwitterEntity {
     }
 
     public void addTweet(Tweet tweet) {
-        if (!tweets.contains(tweet)) {
-            this.tweets.add(tweet);
-            notifyObservers(tweet);
+    if (!tweets.contains(tweet)) {
+        this.tweets.add(tweet);
+        notifyObservers(tweet);
 
-            // Save the tweet to the user's news feed and the news feeds of their followers
-            if (!newsFeed.contains(tweet)) {
-                this.newsFeed.add(tweet);
-                for (User follower : followers) {
-                    follower.newsFeed.add(tweet);
-                }
-            }
-
-            // Sort the news feed in chronological order
-            newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
-
-            // Update the latest posted tweet
-            setLatestTweet(tweet);
+        // Save the tweet to the user's news feed
+        if (!newsFeed.contains(tweet)) {
+            this.newsFeed.add(tweet);
         }
+
+        // Update the news feeds of all followers
+        for (User follower : followers) {
+            follower.newsFeed.add(tweet);
+        }
+
+        // Sort the news feed in chronological order
+        newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
+
+        // Update the latest posted tweet
+        setLatestTweet(tweet);
     }
+}
+
 
     public List<Tweet> getNewsFeed() {
         return newsFeed;

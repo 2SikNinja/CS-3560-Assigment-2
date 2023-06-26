@@ -4,12 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
-
 
 public class UserView extends JFrame implements Observer {
     private User user;
@@ -165,23 +164,19 @@ public class UserView extends JFrame implements Observer {
     }
 
     @Override
-    public void update(Tweet tweet) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (isUpdatingNewsFeed) {
-                    // Only display the latest tweet
-                    Tweet latestTweet = user.getLatestTweet();
-                    if (latestTweet != null && latestTweet.equals(tweet)) {
-                        updateNewsFeed();
-                    }
+public void update(Tweet tweet) {
+    SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            if (isUpdatingNewsFeed) {
+                // Check if the tweet belongs to the user or the user's followings
+                if (tweet.getAuthor().equals(user) || user.getFollowingUsers().contains(tweet.getAuthor())) {
+                    updateNewsFeed();
                 }
             }
-        });
-    }
+        }
+    });
+}
 
-    public void updateUserView() {
-        updateFollowingList();
-        updateNewsFeed();
-    }
+
 }
