@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.*;
 
 public class UserView extends JFrame implements Observer {
@@ -131,40 +132,56 @@ public class UserView extends JFrame implements Observer {
     }
 
     private void updateNewsFeed() {
-        newsFeedModel.clear();
-        List<Tweet> sortedTweets = getSortedTweets();
-        for (Tweet tweet : sortedTweets) {
-            String formattedTimestamp = tweet.getTimestamp().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+    newsFeedModel.clear();
+    List<Tweet> sortedTweets = getSortedTweets();
+
+    Set<LocalDateTime> addedTimestamps = new HashSet<>(); // Keep track of added timestamps
+
+    // Add the tweets from following users and group members to the news feed
+    for (Tweet tweet : sortedTweets) {
+        LocalDateTime timestamp = tweet.getTimestamp();
+        if (!addedTimestamps.contains(timestamp)) {
+            addedTimestamps.add(timestamp);
+
+            String formattedTimestamp = timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
             String message = "[" + formattedTimestamp + "] " + tweet.getAuthor().getId() + ": " + tweet.getMessage();
             newsFeedModel.addElement(message);
         }
     }
+}
 
     private List<Tweet> getSortedTweets() {
-        List<Tweet> allTweets = new ArrayList<>();
-        Set<User> followingUsers = new HashSet<>(user.getFollowingUsers());
+    List<Tweet> allTweets = new ArrayList<>();
+    Set<User> followingUsers = new HashSet<>(user.getFollowingUsers());
 
-        // Collect all tweets from following users
-        for (User followingUser : followingUsers) {
-            allTweets.addAll(followingUser.getTweets());
-        }
+    // Collect all tweets from following users
+    for (User followingUser : followingUsers) {
+        allTweets.addAll(followingUser.getTweets());
+    }
 
-        // Collect all tweets from group members
-        for (Group group : user.getGroups()) {
-            List<TwitterEntity> entities = group.getEntities();
-            for (TwitterEntity entity : entities) {
-                if (entity instanceof User) {
-                    User groupUser = (User) entity;
-                    allTweets.addAll(groupUser.getTweets());
-                }
+    // Collect all tweets from group members
+    for (Group group : user.getGroups()) {
+        List<TwitterEntity> entities = group.getEntities();
+        for (TwitterEntity entity : entities) {
+            if (entity instanceof User) {
+                User groupUser = (User) entity;
+                allTweets.addAll(groupUser.getTweets());
             }
         }
-
-        // Sort the tweets based on timestamp
-        allTweets.sort(Comparator.comparing(Tweet::getTimestamp));
-
-        return allTweets;
     }
+
+    // Add the user's own tweets to the list
+    allTweets.addAll(user.getTweets());
+
+    // Sort the tweets based on timestamp and remove duplicates with the same timestamp
+    allTweets = allTweets.stream()
+            .distinct()
+            .sorted(Comparator.comparing(Tweet::getTimestamp))
+            .collect(Collectors.toList());
+
+    return allTweets;
+}
+
 
     private User findUser(String userId) {
         AdminControlPanel adminControlPanel = AdminControlPanel.getInstance();
