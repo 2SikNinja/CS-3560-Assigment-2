@@ -14,6 +14,7 @@ public class User implements TwitterEntity {
     private Tweet latestTweet; // Keep track of the latest posted tweet
     private UserView userView; // Reference to the associated UserView instance
     private List<Group> groups; // List of groups the user belongs to
+    private long creationTime; // Creation time of the user
 
     public User(String id) {
         this.id = id;
@@ -25,6 +26,7 @@ public class User implements TwitterEntity {
         this.latestTweet = null;
         this.userView = null;
         this.groups = new ArrayList<>();
+        this.creationTime = System.currentTimeMillis();
         totalUsers++;
     }
 
@@ -58,36 +60,34 @@ public class User implements TwitterEntity {
     }
 
     public void addTweet(Tweet tweet) {
-    if (tweets.contains(tweet)) {
-        return; // Tweet already exists, no further processing needed
+        if (tweets.contains(tweet)) {
+            return; // Tweet already exists, no further processing needed
+        }
+
+        this.tweets.add(tweet);
+        notifyObservers(tweet);
+
+        // Update the news feeds of all followers
+        for (User follower : followers) {
+            follower.newsFeed.add(tweet);
+        }
+
+        // Update the news feeds of all group members
+        for (Group group : groups) {
+            group.notifyObservers(tweet);
+        }
+
+        // Update the news feed of the current user
+        if (!newsFeed.contains(tweet)) {
+            this.newsFeed.add(tweet);
+        }
+
+        // Sort the news feed in chronological order
+        newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
+
+        // Update the latest posted tweet
+        setLatestTweet(tweet);
     }
-
-    this.tweets.add(tweet);
-    notifyObservers(tweet);
-
-    // Update the news feeds of all followers
-    for (User follower : followers) {
-        follower.newsFeed.add(tweet);
-    }
-
-    // Update the news feeds of all group members
-    for (Group group : groups) {
-        group.notifyObservers(tweet);
-    }
-
-    // Update the news feed of the current user
-    if (!newsFeed.contains(tweet)) {
-        this.newsFeed.add(tweet);
-    }
-
-    // Sort the news feed in chronological order
-    newsFeed.sort(Comparator.comparing(Tweet::getTimestamp));
-
-    // Update the latest posted tweet
-    setLatestTweet(tweet);
-}
-
-
 
     public List<Tweet> getNewsFeed() {
         return newsFeed;
@@ -129,6 +129,10 @@ public class User implements TwitterEntity {
         return groups;
     }
 
+    public long getCreationTime() {
+        return creationTime;
+    }
+
     @Override
     public void addObserver(Observer observer) {
         this.observers.add(observer);
@@ -139,14 +143,13 @@ public class User implements TwitterEntity {
         this.observers.remove(observer);
     }
 
-   @Override
-public void notifyObservers(Tweet tweet) {
-    List<Observer> copyObservers = new ArrayList<>(observers);
-    for (Observer observer : copyObservers) {
-        observer.update(tweet);
+    @Override
+    public void notifyObservers(Tweet tweet) {
+        List<Observer> copyObservers = new ArrayList<>(observers);
+        for (Observer observer : copyObservers) {
+            observer.update(tweet);
+        }
     }
-}
-
 
     @Override
     public void accept(Visitor visitor) {
