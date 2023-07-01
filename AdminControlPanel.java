@@ -8,7 +8,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AdminControlPanel {
     private static AdminControlPanel instance = null;
@@ -210,6 +213,20 @@ public class AdminControlPanel {
         });
         rightSidePanel.add(showPositivePercentageBtn);
 
+	   
+        JButton userGroupVerification = new JButton("Verify Users and Groups");
+	   userGroupVerification.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			boolean allIDsValid = validateIDs(root);
+			String verificationMessage = allIDsValid ? "Users and Groups Verified" : "Some IDs are invalid.";
+			JOptionPane.showMessageDialog(frame, verificationMessage);
+				}
+			});
+		rightSidePanel.add(userGroupVerification);
+
+
+
         frame.add(rightSidePanel);
 
         // Set custom icons for Group and User nodes
@@ -288,4 +305,32 @@ public class AdminControlPanel {
             return component;
         }
     }
+
+    private boolean validateIDs(DefaultMutableTreeNode node) {
+    Set<String> idSet = new HashSet<>();
+    Enumeration<?> enumeration = node.depthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+        DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) enumeration.nextElement();
+        Object userObject = currentNode.getUserObject();
+        if (userObject instanceof TwitterEntity) {
+            TwitterEntity entity = (TwitterEntity) userObject;
+            String id = entity.getId();
+            if (idSet.contains(id) || id.contains(" ")) {
+                return false;
+            }
+            idSet.add(id);
+        }
+    }
+
+    for (int i = 0; i < node.getChildCount(); i++) {
+        DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
+        if (!validateIDs(childNode)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
 }
