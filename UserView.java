@@ -30,8 +30,6 @@ public class UserView extends JFrame implements Observer {
         setSize(400, 500);
         setLayout(new GridLayout(4, 1));
 
-
-
         // Setup following list
         followingModel = new DefaultListModel<>();
         JList<String> followingList = new JList<>(followingModel);
@@ -135,7 +133,7 @@ public class UserView extends JFrame implements Observer {
         }
     }
 
-    private void updateNewsFeed() {
+    public void updateNewsFeed() {
         newsFeedModel.clear();
         List<Tweet> sortedTweets = getSortedTweets();
 
@@ -187,10 +185,10 @@ public class UserView extends JFrame implements Observer {
     }
 
     private String getFormattedTimestamp(long timestamp) {
-    LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneOffset.systemDefault());
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    return dateTime.format(formatter);
-}
+        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneOffset.systemDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return dateTime.format(formatter);
+    }
 
     private User findUser(String userId) {
         AdminControlPanel adminControlPanel = AdminControlPanel.getInstance();

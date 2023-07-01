@@ -70,6 +70,9 @@ public class User implements TwitterEntity {
         // Update the news feeds of all followers
         for (User follower : followers) {
             follower.newsFeed.add(tweet);
+            if (follower.getUserView() != null) {
+                follower.getUserView().updateNewsFeed(); // Update the news feed of the follower's UserView
+            }
         }
 
         // Update the news feeds of all group members
