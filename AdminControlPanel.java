@@ -8,10 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.time.LocalDateTime;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 public class AdminControlPanel {
     private static AdminControlPanel instance = null;
@@ -225,7 +227,37 @@ public class AdminControlPanel {
 			});
 		rightSidePanel.add(userGroupVerification);
 
-
+	    JButton lastUpdatedUser = new JButton("Last Updated User");
+        lastUpdatedUser.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LocalDateTime latestTimestamp = null;
+                User latestUser = null;
+                
+                for (TwitterEntity entity : entities.values()) {
+                    if (entity instanceof User) {
+                        User user = (User) entity;
+                        List<Tweet> tweets = user.getTweets();
+                        if (!tweets.isEmpty()) {
+                            Tweet latestTweet = tweets.get(tweets.size() - 1);
+                            LocalDateTime timestamp = latestTweet.getTimestamp();
+                            if (latestTimestamp == null || timestamp.isAfter(latestTimestamp)) {
+                                latestTimestamp = timestamp;
+                                latestUser = user;
+                            }
+                        }
+                    }
+                }
+                
+                if (latestUser != null) {
+                    String message = "Latest timestamped message: " + latestTimestamp.toString() + "\nUser: " + latestUser.getName();
+                    JOptionPane.showMessageDialog(frame, message);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "No messages found.");
+                }
+            }
+        });
+        rightSidePanel.add(lastUpdatedUser);
 
         frame.add(rightSidePanel);
 
